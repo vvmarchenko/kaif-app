@@ -2,8 +2,15 @@ FROM node:alpine
 
 WORKDIR /app
 
-COPY . .
-RUN npm install
-RUN npm run build
+COPY package.json package.json
+COPY package-lock.json package-lock.json
 
-CMD ["npm", "start"]
+
+RUN npm install
+
+COPY .next .next
+COPY public public
+
+EXPOSE 3000
+
+CMD npm start
