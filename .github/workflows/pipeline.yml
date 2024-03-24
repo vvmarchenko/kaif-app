@@ -23,7 +23,7 @@ jobs:
 
       - name: Run Docker container and export build
         run: |
-          docker run --name kaif-app-build-container kaif-app /bin/sh -c "npm run build"
+          docker run --name kaif-app-container kaif-app /bin/sh -c "npm run build"
           docker cp kaif-app-container:/app build
           docker rm kaif-app-container
 
