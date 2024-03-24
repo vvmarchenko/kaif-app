@@ -1,0 +1,66 @@
+name: "Build and deploy kaif-app app in AWS"
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-kaif-app:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build the Docker image
+        run: |
+          docker build -t kaif-app .
+
+      - name: Run Docker container and export build
+        run: |
+          docker run --name kaif-app-container kaif-app
+          docker cp kaif-app-container:/app build
+          docker rm kaif-app-container
+
+      - name: Save frontend build
+        uses: actions/upload-artifact@v3
+        with:
+          name: fe-app-build
+          path: build
+          retention-days: 1
+
+  upload-kaif-app:
+    needs: build-kaif-app
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: fe-app-build
+          path: build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
+          aws-region: us-east-1
+
+      - name: Upload files
+        run: aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME }}/
+
+  invalidate-cdn-cache:
+    needs: upload-kaif-app
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
+          aws-region: us-east-1
+
+      - name: Invalidate cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} --paths "/*"
