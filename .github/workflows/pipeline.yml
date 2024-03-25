@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build-kaif-app
-          path: kaif-app/build
+          path: ./build
           retention-days: 1
           
   upload-kaif-app:
