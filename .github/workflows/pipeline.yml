@@ -38,7 +38,7 @@ jobs:
         with:
           name: build-kaif-app
           path: |
-            .out/**
+            out/
           retention-days: 1
           
   upload-kaif-app:
