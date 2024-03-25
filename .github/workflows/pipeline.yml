@@ -10,57 +10,55 @@ on:
 permissions:
   id-token: write
   contents: read
-
+  
 jobs:
   build-kaif-app:
+    defaults:
+      run:
+        working-directory: /
     runs-on: ubuntu-22.04
+    container:
+      image: node:16
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Build the Docker image
-        run: |
-          docker build -t kaif-app .
-
-      - name: Run Docker container and export build
-        run: |
-          docker run --name kaif-app-container kaif-app /bin/sh -c "npm run build"
-          docker cp kaif-app-container:/app build
-          docker rm kaif-app-container
-
-      - name: Save frontend build
+      - run: npm install
+      - run: npm run test a --watchAll=false
+      - run: npm run build
+        env:
+          DISABLE_ESLINT_PLUGIN: true # Attention! Use this feature only in test workflows.
+      - name: Save app build
         uses: actions/upload-artifact@v3
         with:
-          name: fe-app-build
-          path: build
+          name: build-kaif-app
+          path: /build
           retention-days: 1
-
+          
   upload-kaif-app:
-    needs: build-kaif-app
+    needs:
+      - build-kaif-app
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: fe-app-build
+          name: build-kaif-app
           path: build
-
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
           aws-region: us-east-1
-
       - name: Upload files
-        run: aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME }}/
-
+        run: aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME}}/
+        
   invalidate-cdn-cache:
-    needs: upload-kaif-app
+    needs:
+      - upload-kaif-app
     runs-on: ubuntu-22.04
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
           aws-region: us-east-1
-
-      - name: Invalidate cache
+      - name: Invalidate cache 
         run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} --paths "/*"
