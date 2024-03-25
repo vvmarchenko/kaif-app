@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build-kaif-app
-          path: ./build
+          path: ./.next
           retention-days: 1
           
   upload-kaif-app:
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: build-kaif-app
-          path: build
+          path: ./out
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
