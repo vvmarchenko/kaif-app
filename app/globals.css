@@ -30,4 +30,29 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+  
+  .neonText {
+    animation: neonFlicker 2.5s infinite alternate;
+    color: #ffc3e1;
+  }
+}
+
+
+@keyframes neonFlicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow:
+      0 0 4px #fff,
+      0 0 11px #fff,
+      0 0 19px #ff3df4,
+      0 0 40px #ff3df4,
+      0 0 80px #ff3df4,
+      0 0 90px #ff3df4,
+      0 0 100px #ff3df4,
+      0 0 150px #ff3df4;
+    opacity: 1;
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+    opacity: 0.5;
+  }
 }
