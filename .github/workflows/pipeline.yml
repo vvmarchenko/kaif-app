@@ -10,12 +10,12 @@ on:
 permissions:
   id-token: write
   contents: read
-  
+
 jobs:
   build-kaif-app:
     defaults:
       run:
-        working-directory: /
+        working-directory: kaif-app
     runs-on: ubuntu-22.04
     container:
       image: node:16
