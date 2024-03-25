@@ -55,7 +55,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
           aws-region: us-east-1
       - name: Upload files
-        run: aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME}}/
+        run: aws s3 sync ./out s3://${{ secrets.S3_BUCKET_NAME}}/
         
   invalidate-cdn-cache:
     needs:
