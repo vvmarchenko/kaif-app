@@ -30,8 +30,6 @@ jobs:
             ${{ runner.os }}-npm-
       - name: Clear npm cache
         run: npm cache clean --force
-      - name: Install npm dependencies
-        run: npm install
       - name: Run tests
         run: npm run test a --watchAll=false
       - name: Build the project
