@@ -13,9 +13,6 @@ permissions:
   
 jobs:
   build-kaif-app:
-    defaults:
-      run:
-        working-directory: /
     runs-on: ubuntu-22.04
     container:
       image: node:16
