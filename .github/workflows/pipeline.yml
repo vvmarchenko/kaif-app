@@ -3,7 +3,7 @@ name: "Build and deploy kaif-app app in AWS"
 on:
   push:
     branches:
-      - 'main'
+      - 'cloud_front'
     paths-ignore:
       - 'README.md'
 
