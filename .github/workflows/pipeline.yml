@@ -35,6 +35,12 @@ jobs:
           aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.AWS_REPO_URI }}
           docker push "${{ env.IMAGE_TAG }}"
           echo "✅ Docker image ${{ env.IMAGE_TAG }} has been pushed to AWS ECR" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deployment-manifest
+          path: .
 
   deploy:
     needs: build
@@ -45,6 +51,12 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: deployment-manifest
+          path: .
 
       - name: Configure Kubeconfig
         run: |
@@ -55,6 +67,6 @@ jobs:
         run: |
           export IMAGE=${{ secrets.AWS_REPO_URI }}:${{ github.sha }}
           ls -la
-          envsubst < ./deployment.yaml | kubectl apply -f -
+          envsubst < deployment.yaml | kubectl apply -f -
           kubectl rollout status deployment/kaif-app
           echo "✅ Deployment kaif-app has been updated" >> $GITHUB_STEP_SUMMARY
