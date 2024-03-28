@@ -61,8 +61,8 @@ jobs:
       - name: Configure Kubeconfig
         run: |
           mkdir -p $HOME/.kube
-          cat $HOME/.kube/config
           aws eks --region us-east-1 update-kubeconfig --name kaif-app-eks
+          cat $HOME/.kube/config
 
       - name: Deploy to Kubernetes
         run: |
