@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# kaif-app
 
-## Getting Started
+Вітаємо в репозиторії проекту "kaif-app", який розроблено з використанням Next.js!
 
-First, run the development server:
+![Next.js Logo](/img/nextjs.jpg)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Огляд
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Проект "kaif-app" є тестовим проектом, створеним для демонстрації розгортання різної інфраструктури у сервісі AWS Cloud. Він показує, як можна ефективно використовувати облачні технології для розгортання та управління веб-додатками.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Гілки Репозиторію
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Репозиторій містить дві основні гілки, кожна з яких демонструє різні підходи до розгортання інфраструктури в AWS Cloud.
 
-## Learn More
+### 1. CloudFront
 
-To learn more about Next.js, take a look at the following resources:
+**Гілка**: [cloud_front](https://github.com/vvmarchenko/kaif-app/tree/cloud_front)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Цей сетап показує, як можна розгорнути простий веб-додаток через AWS CloudFront, використовуючи S3 Bucket та GitHub Actions для неперервної інтеграції та розгортання. Інфраструктура створена та управляється за допомогою Terraform.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Детальніше в [README бранча](https://github.com/vvmarchenko/kaif-app/tree/cloud_front).
 
-## Deploy on Vercel
+### 2. EKS Cluster
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Гілка**: [eks_cluster](https://github.com/vvmarchenko/kaif-app/tree/eks_cluster)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+У цьому сетапі демонструється розгортання додатку в сервісі AWS Elastic Kubernetes Service. Використовуються Docker для збірки додатку, AWS ECR для зберігання образів і GitHub Actions для автоматизації процесу збірки та розгортання додатку в EKS кластер. Інфраструктура також розгортається за допомогою Terraform.
+
+Детальніше в [README бранча](https://github.com/vvmarchenko/kaif-app/tree/eks_cluster).
+
+
