@@ -55,6 +55,6 @@ jobs:
         run: |
           export IMAGE=${{ secrets.AWS_REPO_URI }}:${{ github.sha }}
           ls -la
-          envsubst < ${{ github.workspace }}/deployment.yaml | kubectl apply -f -
+          envsubst < ./deployment.yaml | kubectl apply -f -
           kubectl rollout status deployment/kaif-app
           echo "✅ Deployment kaif-app has been updated" >> $GITHUB_STEP_SUMMARY
