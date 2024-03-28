@@ -1,78 +1,78 @@
 variable "profile_name" {
-  type = string
+  type        = string
   description = "The your profile name in AWS"
-  default = "default"
+  default     = "default"
 }
 
 variable "region_name" {
-  type = string
+  type        = string
   description = "Choose any preferred region"
-  default = "us-east-1"
+  default     = "us-east-1"
 }
 
 variable "bucket_name" {
-  type = string
+  type        = string
   description = "The your unique S3 Bucket name"
-  default = "kaif-app-universe"
+  default     = "kaif-app-universe"
 }
 
 variable "default_root_object" {
-  type = string
+  type        = string
   description = "Add your file for main web-page"
-  default = "index.html"
+  default     = "index.html"
 }
 
 variable "price_class" {
   type        = string
   description = "The price class for the CDN"
-  default = "PriceClass_100"
+  default     = "PriceClass_100"
 }
 
 variable "viewer_protocol_policy" {
   type        = string
   description = "The protocol that viewers can use to access the CDN"
-  default = "allow-all"
+  default     = "allow-all"
 }
 
 variable "min_ttl" {
   type        = number
   description = "The minimum time-to-live for objects in the CDN cache"
-  default = 0
+  default     = 0
 }
 
 variable "default_ttl" {
   type        = number
   description = "The default time-to-live for objects in the CDN cache"
-  default = 3600
+  default     = 3600
 }
 
 variable "max_ttl" {
   type        = number
   description = "The maximum time-to-live for objects in the CDN cache"
-  default = 86400
+  default     = 86400
 }
 
 variable "environment_tag" {
-  type = string
+  type        = string
   description = "The global tag for your project"
-  default = "production"
+  default     = "production"
 }
 
 variable "owner_tag" {
-  type = string
+  type        = string
   description = "The owner tag who create this project"
-  default = "kaif-app"
+  default     = "kaif-app"
 }
 
 
 variable "project_tag" {
-  type = string
+  type        = string
   description = "The project tag name"
-  default = "kaif-app"
+  default     = "kaif-app"
 }
 
 variable "origin_access_control_name" {
-  type = string
+  type        = string
   description = "The name for origin access control"
-  default = "Access control for project"
+  default     = "Access control for project"
 }

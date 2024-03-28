@@ -1,6 +1,6 @@
 data "aws_iam_policy_document" "this" {
   statement {
-    sid       = "AllowCloudFrontServicePrincipal"
+    sid    = "AllowCloudFrontServicePrincipal"
     effect = "Allow"
     actions = [
       "s3:GetObject",

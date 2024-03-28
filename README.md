@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Розгортання kaif-app через CloudFront
 
-## Getting Started
+Цей документ описує процес розгортання інфраструктури та додатку `kaif-app` у AWS CloudFront, використовуючи Terraform для інфраструктури та GitHub Actions для CI/CD.
 
-First, run the development server:
+## Розгортання інфраструктури через Terraform
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Усі конфігураційні файли Terraform зберігаються у директорії `/terraform_cf`:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `main.tf` - Основні налаштування ресурсів.
+- `output.tf` - Виведення значень після розгортання.
+- `policy.tf` - Політики доступу до ресурсів.
+- `provider.tf` - Налаштування провайдера AWS.
+- `variables.tf` - Визначення змінних для конфігурації.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Основні компоненти сетапу:
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- **Provider Block**: Конфігурує провайдера AWS для використання у шаблоні.
+- **Resource Blocks**: Визначають ресурси, такі як S3 bucket для зберігання веб-сайту та CloudFront distribution для доставки контенту.
+- **Local Values**: Використовуються для збереження локальних змінних.
+- **Output**: Виводить доменне ім'я CloudFront distribution після успішного розгортання.
 
-## Learn More
+### Кроки для розгортання:
 
-To learn more about Next.js, take a look at the following resources:
+1. **`terraform init`**: Ініціалізує робочий каталог Terraform.
+2. **`terraform fmt`**: Форматує файли конфігурації для покращення читабельності.
+3. **`terraform plan`**: Показує, які дії буде виконано Terraform під час застосування конфігурації.
+4. **`terraform apply`**: Застосовує конфігурацію Terraform для створення визначених ресурсів.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Перед виконанням команд, важливо здійснити налаштування облікових даних AWS для інтеграції з вашим аккаунтом.**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## CI/CD через GitHub Actions
 
-## Deploy on Vercel
+### Секрети для GitHub Actions:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Для успішного виконання пайплайну потрібно налаштувати наступні секрети у вашому GitHub репозиторії:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- `AWS_ARN_ROLE`: ARN ролі AWS, яка надає права доступу для дій, що вимагаються пайплайном.
+- `S3_BUCKET_NAME`: Ім'я S3 Bucket, куди буде завантажено зібраний додаток.
+- `CF_DISTRIBUTION_ID`: ID CloudFront distribution, для якого буде виконано інвалідацію кешу.
+
+Ці секрети використовуються у різних кроках пайплайну для конфігурації AWS credentials, завантаження файлів на S3 та інвалідації кешу CloudFront.
+
+### Пайплайн "Build and deploy kaif-app app in AWS":
+
+Цей пайплайн складається з трьох основних job:
+
+1. **`build-kaif-app`**: Збирає проект, використовуючи Node.js.
+2. **`upload-kaif-app`**: Завантажує зібраний проект у вказаний S3 Bucket.
+3. **`invalidate-cdn-cache`**: Інвалідує кеш CloudFront для оновлення контенту на веб-сайті.
+
+Пайплайн активується при кожному push у гілку `cloud_front`, за винятком змін у файлі `README.md`.
+
+### Як працює:
+
+- Після кожного коміту в гілку `cloud_front`, GitHub Actions автоматично запускає пайплайн.
+- Спочатку проект збирається в контейнері з Node.js.
+- Потім зібраний проект завантажується в S3 Bucket.
+- В кінці, для оновлення контенту на сайті, інвалідується кеш CloudFront.
+
+## Демонстрація роботи сайту
+
+Після успішного розгортання та оновлення контенту, ви можете переглянути сайт за доменним ім'ям, яке надає CloudFront.
+
+![Демонстрація сайту](/gif/kaif-app.gif)
