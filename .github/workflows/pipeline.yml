@@ -1,73 +1,59 @@
-name: "Build and deploy kaif-app app in AWS"
+name: Deploy Next.js App to EKS
 
 on:
   push:
     branches:
-      - 'cloud_front'
+      - 'eks_cluster'
     paths-ignore:
       - 'README.md'
 
 permissions:
   id-token: write
   contents: read
-  
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+  IMAGE_TAG: ${{ secrets.AWS_REPO_URI }}:${{ github.sha }}
+  K8S_DEPLOYMENT_NAME: kaif-app
+
 jobs:
-  build-kaif-app:
+  build:
     runs-on: ubuntu-22.04
-    container:
-      image: node:20.11.1-alpine
     steps:
       - uses: actions/checkout@v3
-      - name: Cache node modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-      - name: Clear npm cache
-        run: npm cache clean --force
-      - name: Install npm dependencies
-        run: npm install
-      - name: Build the project
-        run: npm run build
-        env:
-          DISABLE_ESLINT_PLUGIN: true # Attention! Use this feature only in test workflows.
-      - name: Save app build
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-kaif-app
-          path: |
-            out/
-          retention-days: 1
-          
-  upload-kaif-app:
-    needs:
-      - build-kaif-app
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: build-kaif-app
-          path: ./out
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+      
+      - name: Configure AWS creds for ECR
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
-          aws-region: us-east-1
-      - name: Upload files
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Build and Push Docker image to AWS ECR
         run: |
-          aws s3 sync out/ s3://${{ secrets.S3_BUCKET_NAME}}
-        
-  invalidate-cdn-cache:
-    needs:
-      - upload-kaif-app
+          docker build -t "${{ env.IMAGE_TAG }}" .
+          aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.AWS_REPO_URI }}
+          docker push "${{ env.IMAGE_TAG }}"
+          echo "✅ Docker image ${{ env.IMAGE_TAG }} has been pushed to AWS ECR" >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    needs: build
     runs-on: ubuntu-22.04
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+      - name: Configure AWS creds for EKS
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
-          aws-region: us-east-1
-      - name: Invalidate cache 
-        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} --paths "/*"
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure Kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > $HOME/.kube/config
+
+      - name: Deploy to Kubernetes
+        run: |
+          export IMAGE=${{ secrets.AWS_REPO_URI }}:${{ github.sha }}
+          envsubst < deployment.yaml | kubectl apply -f -
+          kubectl rollout status deployment/kaif-app
+          echo "✅ Deployment kaif-app has been updated" >> $GITHUB_STEP_SUMMARY
