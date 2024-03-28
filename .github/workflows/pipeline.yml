@@ -64,10 +64,15 @@ jobs:
           aws eks --region us-east-1 update-kubeconfig --name kaif-app-eks
           cat $HOME/.kube/config
 
+      - name: Check kubectl context and get nodes
+        run: |
+          kubectl version
+          kubectl config current-context
+          kubectl get nodes
+
       - name: Deploy to Kubernetes
         run: |
           export IMAGE=${{ secrets.AWS_REPO_URI }}:${{ github.sha }}
-          kubectl get nodes
           envsubst < deployment.yaml | kubectl apply -f - --validate=false
           kubectl rollout status deployment/kaif-app
           echo "✅ Deployment kaif-app has been updated" >> $GITHUB_STEP_SUMMARY
