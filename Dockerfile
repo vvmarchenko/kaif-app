@@ -15,7 +15,7 @@ COPY . .
 
 # Build the Next.js app
 RUN npm run build
-RUN npm run export
+
 
 # Install a simple http server for serving static content
 RUN npm install -g http-server
