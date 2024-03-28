@@ -45,18 +45,18 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-22.04
-    steps:
-      - name: Configure AWS creds for EKS
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
-          aws-region: ${{ env.AWS_REGION }}
-      
+    steps:      
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
           name: deployment-manifest
           path: .
+      
+      - name: Set up AWS credentials
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
 
       - name: Configure Kubeconfig
         run: |
@@ -64,15 +64,10 @@ jobs:
           aws eks --region us-east-1 update-kubeconfig --name kaif-app-eks
           cat $HOME/.kube/config
 
-      - name: Check kubectl context and get nodes
-        run: |
-          kubectl version
-          kubectl config current-context
-          kubectl get nodes
-
       - name: Deploy to Kubernetes
         run: |
           export IMAGE=${{ secrets.AWS_REPO_URI }}:${{ github.sha }}
-          envsubst < deployment.yaml | kubectl apply -f - --validate=false
+          kubectl get nodes
+          envsubst < deployment.yaml | kubectl apply -f -
           kubectl rollout status deployment/kaif-app
           echo "✅ Deployment kaif-app has been updated" >> $GITHUB_STEP_SUMMARY
