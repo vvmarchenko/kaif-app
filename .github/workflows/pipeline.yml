@@ -67,7 +67,6 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           export IMAGE=${{ secrets.AWS_REPO_URI }}:${{ github.sha }}
-          kubectl get nodes
           envsubst < deployment.yaml | kubectl apply -f -
           kubectl rollout status deployment/kaif-app
           echo "✅ Deployment kaif-app has been updated" >> $GITHUB_STEP_SUMMARY
