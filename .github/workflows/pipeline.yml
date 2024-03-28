@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: deployment-manifest
-          path: .
+          path: ./deployment.yaml
 
   deploy:
     needs: build
