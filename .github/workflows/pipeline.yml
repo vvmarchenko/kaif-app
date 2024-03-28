@@ -1,5 +1,6 @@
 name: "Build and deploy kaif-app app in AWS"
 
+# Here, it runs when code is pushed to the 'cloud_front' branch, except when only README.md is changed.
 on:
   push:
     branches:
@@ -7,33 +8,37 @@ on:
     paths-ignore:
       - 'README.md'
 
+# Permissions needed for this workflow.
 permissions:
   id-token: write
   contents: read
   
+# Jobs are tasks that run in the workflow. There are 3 main jobs in this workflow.
 jobs:
+  # The first job is to build the kaif-app.
   build-kaif-app:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04 # This tells GitHub to use an Ubuntu server to run this job.
     container:
-      image: node:20.11.1-alpine
+      image: node:20.11.1-alpine # This uses a Node.js container to run the job.
     steps:
-      - uses: actions/checkout@v3
-      - name: Cache node modules
+      - uses: actions/checkout@v3 # Uses the 'checkout' action to clone the project repository into the Gihub server.
+
+      - name: Cache node modules # This step caches the Node modules to speed up the build process.
         uses: actions/cache@v2
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
-      - name: Clear npm cache
+      - name: Clear npm cache # This clears the npm cache to ensure fresh modules are used.
         run: npm cache clean --force
-      - name: Install npm dependencies
+      - name: Install npm dependencies # This installs the project dependencies.
         run: npm install
-      - name: Build the project
+      - name: Build the project # This builds the project.
         run: npm run build
         env:
-          DISABLE_ESLINT_PLUGIN: true # Attention! Use this feature only in test workflows.
-      - name: Save app build
+          DISABLE_ESLINT_PLUGIN: true # Note: Use this feature only in test workflows to disable ESLint.
+      - name: Save app build # This step saves the build output for use in later steps.
         uses: actions/upload-artifact@v3
         with:
           name: build-kaif-app
@@ -41,33 +46,35 @@ jobs:
             out/
           retention-days: 1
           
+  # The second job is to upload the built app to AWS S3.
   upload-kaif-app:
     needs:
-      - build-kaif-app
+      - build-kaif-app # This job needs to wait until the build-kaif-app job is completed.
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/download-artifact@v3
         with:
           name: build-kaif-app
           path: ./out
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials # This step configures the AWS credentials for accessing AWS services.
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
+          role-to-assume: ${{ secrets.AWS_ARN_ROLE }} # The AWS role to assume.
           aws-region: us-east-1
-      - name: Upload files
+      - name: Upload files # This step uploads the files to the specified S3 bucket.
         run: |
           aws s3 sync out/ s3://${{ secrets.S3_BUCKET_NAME}}
         
+  # The third job is to invalidate the CDN cache to make sure the latest version of the app is served.
   invalidate-cdn-cache:
     needs:
-      - upload-kaif-app
+      - upload-kaif-app # This job needs to wait until the upload-kaif-app job is completed.
     runs-on: ubuntu-22.04
     steps:
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials # Repeats the step to configure AWS credentials.
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           role-to-assume: ${{ secrets.AWS_ARN_ROLE }}
           aws-region: us-east-1
-      - name: Invalidate cache 
+      - name: Invalidate cache  # This step invalidates the CloudFront distribution cache.
         run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} --paths "/*"
