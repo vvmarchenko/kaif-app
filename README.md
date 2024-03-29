@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Розгортання kaif-app через EKS Cluster
 
-## Getting Started
+Цей документ описує процес розгортання інфраструктури та додатку `kaif-app` у Amazon EKS (Elastic Kubernetes Service), використовуючи Terraform для інфраструктури та GitHub Actions для CI/CD.
 
-First, run the development server:
+## Розгортання інфраструктури через Terraform
+
+Усі конфігураційні файли Terraform зберігаються у директорії `/terraform_eks`:
+
+- `main.tf` - Основні налаштування ресурсів.
+- `outputs.tf` - Виведення значень після розгортання.
+- `terraform.tf` - Конфігурація версій Terraform.
+- `variables.tf` - Визначення змінних для конфігурації.
+
+### Основні компоненти сетапу:
+
+- **Provider Block**: Конфігурує провайдера AWS для використання у шаблоні.
+- **VPC Module**: Створення віртуальної приватної хмари для ізоляції ресурсів EKS.
+- **EKS Module**: Ініціація Kubernetes кластеру та управління ним.
+- **IRSA (IAM Roles for Service Accounts)**: Надання прав доступу до AWS сервісів з Kubernetes.
+
+### Кроки для розгортання:
+
+1. **`terraform init`**: Ініціалізує робочий каталог Terraform.
+2. **`terraform fmt`**: Форматує файли конфігурації для покращення читабельності.
+3. **`terraform plan`**: Показує, які дії буде виконано Terraform під час застосування конфігурації.
+4. **`terraform apply`**: Застосовує конфігурацію Terraform для створення визначених ресурсів.
+
+**Перед виконанням команд, важливо здійснити налаштування облікових даних AWS для інтеграції з вашим аккаунтом.**
+
+Після створення інфраструктури за допомогою Terraform, налаштуйте ваш `kubeconfig` файл для взаємодії з вашим кластером, виконавши наступну команду:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+aws eks --region us-east-1 update-kubeconfig --name kaif-app-eks
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Можна виконати команду:
+```
+kubectl get nodes
+```
+щоб перевірити стан кластеру.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## CI/CD через GitHub Actions
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### Секрети для GitHub Actions:
 
-## Learn More
+- `AWS_ARN_ROLE`: ARN ролі AWS, яка надає права доступу для дій, що вимагаються пайплайном.
+- `AWS_REGION`: Регіон AWS, де знаходиться EKS кластер.
+- `EKS_CLUSTER_NAME`: Назва EKS кластеру.
+- `AWS_REPO_URI`: URI AWS ECR репозиторію для зберігання Docker образів.
 
-To learn more about Next.js, take a look at the following resources:
+### Пайплайн "Deploy kaif-app app in AWS EKS":
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **`build`**: Збирає Docker образ проекту та завантажує його у AWS ECR.
+2. **`deploy`**: Оновлює Kubernetes маніфест та застосовує його до EKS кластеру для розгортання додатку.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### Як працює:
 
-## Deploy on Vercel
+- Після кожного push у гілку `eks_cluster`, GitHub Actions автоматично запускає пайплайн.
+- Спочатку збирається Docker образ і завантажується в AWS ECR.
+- Потім оновлюється Kubernetes маніфест та застосовується до EKS кластеру для розгортання або оновлення додатку.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Демонстрація роботи сайту
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Після успішного розгортання та оновлення контенту, сайт буде доступний через LoadBalancer, створений для EKS сервісу.
+Перевірити переглянути ресурси кластера можна командою `kubectl get all -A`
+
+![Огляд кластеру](/gif/kubectl_get.jpg)
+
+Ця команда виведе список усіх запущених подів, служб, розгортань тощо, що дозволить вам перевірити, чи ваші сервіси працюють належним чином. Наприклад - сервіс kaif-app доступний ззовні через `LoadBalancer` по URL який буде вказаний в блоку `EXTERNAL-IP` , що було створено автоматично.
+
+
+![Демонстрація сайту](/gif/kaif-app-eks.gif)
